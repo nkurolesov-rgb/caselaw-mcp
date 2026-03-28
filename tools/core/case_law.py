@@ -93,8 +93,7 @@ def _filter_local(
 
 def _search_courtlistener(topic: str, keywords: list[str] | None, year_from: int | None) -> list[dict[str, Any]]:
     query = " ".join([topic.strip(), " ".join(keywords or [])]).strip()
-    filed_after = f"{year_from:04d}-01-01" if isinstance(year_from, int) else None
-    rows = CourtListenerAdapter().search_cases(query=query or topic, filed_after=filed_after)
+    rows = CourtListenerAdapter().search_cases(query=query or topic, year_from=year_from)
     for row in rows:
         row["_source"] = "courtlistener"
     return rows

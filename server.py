@@ -1578,19 +1578,19 @@ def get_classification_stats() -> dict:
     type_stats = conn.execute("""
         SELECT case_type, COUNT(*) as cnt FROM cases
         WHERE case_type IS NOT NULL
-        GROUP BY case_type ORDER BY cnt DESC
+        GROUP BY case_type ORDER BY cnt DESC LIMIT 50
     """).fetchall()
 
     subject_stats = conn.execute("""
         SELECT subject_area, COUNT(*) as cnt FROM cases
         WHERE subject_area IS NOT NULL
-        GROUP BY subject_area ORDER BY cnt DESC
+        GROUP BY subject_area ORDER BY cnt DESC LIMIT 50
     """).fetchall()
 
     outcome_stats = conn.execute("""
         SELECT outcome, COUNT(*) as cnt FROM cases
         WHERE outcome IS NOT NULL
-        GROUP BY outcome ORDER BY cnt DESC
+        GROUP BY outcome ORDER BY cnt DESC LIMIT 50
     """).fetchall()
 
     return {

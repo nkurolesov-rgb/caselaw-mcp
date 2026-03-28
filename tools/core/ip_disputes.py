@@ -67,6 +67,38 @@ IP_DISPUTE_SOURCES = {
     "de_ip_courts",
 }
 
+# Module-level ADAPTERS dict for import by server.py
+ADAPTERS = {
+    "wipo_adr": WIPOADRAdapter,
+    "itc337": ITC337Adapter,
+    "epo_opposition": EPOOppositionAdapter,
+    "ptab": PTABAdapter,
+    "ustr301": USTR301Adapter,
+    "enforcement": EnforcementAdapter,
+    "upc": UPCAdapter,
+    "gipc_index": GIPCIndexAdapter,
+    "euipo_opposition": EUIPOOppositionAdapter,
+    "oecd_counterfeit": OECDCounterfeitAdapter,
+    "wipo_madrid": WIPOMadridAdapter,
+    "wipo_hague": WIPOHagueAdapter,
+    "wipo_lisbon": WIPOLisbonAdapter,
+    "wto_trips": WTOTRIPSAdapter,
+    "court_stats": CourtStatsAdapter,
+    "sep_frand": SEPFRANDAdapter,
+    "upov": UPOVAdapter,
+    "wipo_tech_trends": WIPOTechTrendsAdapter,
+    "ieee_sa": IEEESAAdapter,
+    "wipo_copyright_treaties": WIPOCopyrightTreatiesAdapter,
+    "us_copyright": USCopyrightAdapter,
+    "autm": AUTMAdapter,
+    "ip_australia": IPAustraliaAdapter,
+    "cipo": CIPOAdapter,
+    "inpi_brazil": INPIBrazilAdapter,
+    "ip_india": IPIndiaAdapter,
+    "ipos_singapore": IPOSSingaporeAdapter,
+    "de_ip_courts": DEIPCourtsAdapter,
+}
+
 
 def ip_dispute_search(
     query: str,

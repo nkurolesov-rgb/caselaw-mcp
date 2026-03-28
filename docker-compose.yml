@@ -1,0 +1,16 @@
+services:
+  caselaw-mcp:
+    build: .
+    container_name: caselaw-mcp
+    ports:
+      - "8006:8006"
+    volumes:
+      - /mnt/nvme/caselaw-data:/app/data
+    environment:
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8006
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G

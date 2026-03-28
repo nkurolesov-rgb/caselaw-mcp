@@ -1,0 +1,29 @@
+# MCP framework (includes uvicorn, starlette, httpx, pydantic)
+fastmcp>=2.14.0
+
+# HTTP / scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.1.0
+pypdf>=4.0.0
+
+# Language detection
+langdetect>=1.0.9
+
+# LLM for enrichment
+openai>=1.0.0
+
+# Citation network analysis / visualization
+networkx>=3.2.0
+matplotlib>=3.8.0
+plotly>=5.18.0
+
+# Statistical analysis
+scipy>=1.11.0
+
+# JWT for auth adapters
+pyjwt>=2.0.0
+cryptography>=41.0.0
+
+# Testing
+pytest>=7.4.0
