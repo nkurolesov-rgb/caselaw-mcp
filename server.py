@@ -173,7 +173,7 @@ def tool_estimate_legal_risk(
 # ═══════════════════════════════════════════════════════════════
 
 @mcp.tool()
-async def search_cases(
+def search_cases(
     query: str,
     jurisdiction: str = "US",
     max_results: int = 10,
@@ -223,7 +223,7 @@ async def search_cases(
 
 
 @mcp.tool()
-async def search_cases_global(
+def search_cases_global(
     query: str,
     jurisdictions: list[str] = None,
     max_results_per_jurisdiction: int = 5,
@@ -251,7 +251,7 @@ async def search_cases_global(
 
     for jur in jurisdictions:
         try:
-            result = await search_cases(
+            result = search_cases(
                 query=query,
                 jurisdiction=jur,
                 max_results=max_results_per_jurisdiction,
@@ -270,7 +270,7 @@ async def search_cases_global(
 
 
 @mcp.tool()
-async def get_case_detail(
+def get_case_detail(
     case_id: str,
     jurisdiction: str,
 ) -> dict:
@@ -364,7 +364,7 @@ async def get_case_detail(
 
 
 @mcp.tool()
-async def find_similar_cases(
+def find_similar_cases(
     text: str,
     jurisdiction: str = "ALL",
     max_results: int = 10,
@@ -387,14 +387,14 @@ async def find_similar_cases(
     """
     if jurisdiction == "ALL":
         # Search across multiple major jurisdictions
-        return await search_cases_global(
+        return search_cases_global(
             query=text,
             jurisdictions=["US", "GB", "EU", "JP", "AU", "CA"],
             max_results_per_jurisdiction=max_results // 6,
         )
     else:
         # Single jurisdiction search
-        result = await search_cases(
+        result = search_cases(
             query=text,
             jurisdiction=jurisdiction,
             max_results=max_results,
@@ -407,7 +407,7 @@ async def find_similar_cases(
 
 
 @mcp.tool()
-async def analyze_legal_trend(
+def analyze_legal_trend(
     legal_area: str,
     jurisdiction: str,
     date_from: str | None = None,
@@ -446,13 +446,34 @@ async def analyze_legal_trend(
 
     cases = results if isinstance(results, list) else results.get("cases", [])
 
+    # Sort by importance_score to find landmark cases
+    scored_cases = sorted(cases, key=lambda c: c.get("importance_score") or 0, reverse=True)
+
+    # key_developments: top cases by importance with citation-based scoring
+    key_devs = []
+    for c in scored_cases[:10]:
+        name = c.get("case_name") or c.get("title") or ""
+        score = c.get("importance_score") or 0
+        year = c.get("year") or c.get("decision_date", "")[:4] if c.get("decision_date") else ""
+        if name:
+            key_devs.append(f"{name} ({year}, importance: {score})")
+    if not key_devs:
+        key_devs = [c.get("case_name") or c.get("title") or "unnamed" for c in cases[:5]]
+
+    # Set importance_score for landmark cases based on citation count
+    landmark = []
+    for c in scored_cases[:10]:
+        entry = dict(c)
+        entry["importance_score"] = entry.get("importance_score") or 0
+        landmark.append(entry)
+
     return {
         "trend_summary": f"Found {len(cases)} cases in {legal_area} "
                         f"({jurisdiction}, {year_from or 'all'}-{year_to or 'present'})",
         "case_count": len(cases),
         "time_period": {"from": date_from or "all", "to": date_to or "present"},
-        "key_developments": [c.get("title", "") for c in cases[:5]],
-        "landmark_cases": cases[:10],
+        "key_developments": key_devs,
+        "landmark_cases": landmark,
         "legal_area": legal_area,
         "jurisdiction": jurisdiction,
     }
@@ -1317,7 +1338,7 @@ def get_judge_stats(
 
 
 @mcp.tool()
-async def compare_jurisdictions(
+def compare_jurisdictions(
     topic: str,
     jurisdictions: list[str],
     max_results_per_jurisdiction: int = 10,
@@ -1693,12 +1714,52 @@ def search_cases_advanced(
         d = dict(r)
         d.pop("score", None)
         results.append(d)
+
+    # Bug 5 fix: If case_type filter returned 0 results, retry with case_type as FTS keyword
+    if len(results) == 0 and case_type and use_fts5 and query:
+        # Rebuild FTS query including case_type as search term
+        augmented_query = query + " " + case_type
+        safe_terms2 = []
+        for t in augmented_query.strip().split():
+            if t.strip():
+                escaped = t.strip().replace('"', '""')
+                safe_terms2.append(f'"{escaped}"')
+        fts_query2 = " ".join(safe_terms2)
+        fallback_sql = """SELECT c.case_id, c.case_name, c.jurisdiction, c.court, c.decision_date,
+                 c.case_type, c.subject_area, c.outcome, c.importance_score,
+                 c.has_content, length(c.full_text) as text_len,
+                 bm25(cases_fts, 10.0, 1.0) as score
+                 FROM cases_fts f
+                 JOIN cases c ON c.rowid = f.rowid
+                 WHERE cases_fts MATCH ?"""
+        fb_params = [fts_query2]
+        if jurisdiction:
+            fallback_sql += " AND c.jurisdiction = ?"
+            fb_params.append(jurisdiction)
+        if year_from:
+            fallback_sql += " AND c.decision_date >= ?"
+            fb_params.append(f"{year_from}-01-01")
+        if year_to:
+            fallback_sql += " AND c.decision_date <= ?"
+            fb_params.append(f"{year_to}-12-31")
+        fallback_sql += " ORDER BY c.has_content DESC, score LIMIT ?"
+        fb_params.append(max_results)
+        try:
+            fb_rows = conn.execute(fallback_sql, fb_params).fetchall()
+            for r in fb_rows:
+                d = dict(r)
+                d.pop("score", None)
+                results.append(d)
+        except Exception:
+            pass  # Fallback failure is non-fatal
+
     return {
         "results": results,
         "count": len(results),
         "filters": {"jurisdiction": jurisdiction, "case_type": case_type,
                      "subject_area": subject_area},
         "search_mode": "fts5" if use_fts5 else "like",
+        "fallback_used": len(results) > 0 and case_type is not None,
     }
 
 
