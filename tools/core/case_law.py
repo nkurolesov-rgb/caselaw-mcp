@@ -86,14 +86,17 @@ def _search_fts5(
     fts_query = " ".join(safe_terms)
     params: list = [fts_query]
 
+    # Performance fix: limit FTS5 subquery for broad searches
+    fts_limit = 1000 if not jurisdiction else 10000
+
     sql = """SELECT c.case_id, c.case_name, c.jurisdiction, c.court,
                     c.decision_date, c.case_type, c.subject_area,
                     c.outcome, c.importance_score, c.has_content,
-                    c.summary,
-                    bm25(cases_fts, 10.0, 1.0) as score
-             FROM cases_fts f
-             JOIN cases c ON c.rowid = f.rowid
-             WHERE cases_fts MATCH ?"""
+                    c.summary, 0 as score
+             FROM cases c
+             WHERE c.rowid IN (
+                 SELECT rowid FROM cases_fts WHERE cases_fts MATCH ?
+                 ORDER BY rank LIMIT """ + str(fts_limit) + ")"
 
     if jurisdiction:
         sql += " AND c.jurisdiction = ?"
@@ -105,7 +108,7 @@ def _search_fts5(
         sql += " AND c.decision_date <= ?"
         params.append(f"{year_to}-12-31")
 
-    sql += " ORDER BY c.has_content DESC, score LIMIT ?"
+    sql += " ORDER BY c.has_content DESC, c.importance_score DESC LIMIT ?"
     params.append(min(max_results, 50))
 
     try:

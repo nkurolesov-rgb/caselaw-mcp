@@ -22,7 +22,7 @@ def generate_legal_draft(doc_type: str, jurisdiction: str, context: dict) -> str
     """Generate a concise markdown legal draft for the requested document type."""
     if doc_type not in ALLOWED_DOC_TYPES:
         allowed = ", ".join(sorted(ALLOWED_DOC_TYPES))
-        raise ValueError(f"Unsupported doc_type '{doc_type}'. Use one of: {allowed}")
+        raise ValueError(f"Unsupported doc_type '{ doc_type }'. Use one of: {allowed}")
 
     if not isinstance(context, dict):
         raise ValueError("context must be a dict")
@@ -50,10 +50,66 @@ def generate_legal_draft(doc_type: str, jurisdiction: str, context: dict) -> str
 
     if doc_type == "takedown_notice":
         body = [
-            "## Notice",
-            f"This notice concerns unauthorized distribution of {work_description}.",
-            f"The legal basis asserted is {basis}.",
-            "Please remove or disable access to the identified material promptly and preserve access logs.",
+            "## DMCA Takedown Notice",
+            "### Pursuant to 17 U.S.C. \u00a7 512(c)(3)(A)",
+            "",
+            "**1. Signature of Authorized Person**",
+            "",
+            "I, [FULL LEGAL NAME], am the [TITLE/ROLE] authorized to act on behalf of "
+            f"{rights_holder}, the owner of the exclusive rights that are claimed to be infringed.",
+            "",
+            "Electronic Signature: /s/ [FULL LEGAL NAME]",
+            "Date: [DATE]",
+            "",
+            "**2. Identification of Copyrighted Work(s)**",
+            "",
+            f"The copyrighted work(s) claimed to be infringed: {work_description}.",
+            "",
+            "Registration Number(s): [COPYRIGHT REGISTRATION NUMBER(S), IF APPLICABLE]",
+            "",
+            "**3. Identification of Infringing Material and Its Location**",
+            "",
+            f"The material that is claimed to be infringing is hosted or accessible via: {respondent}",
+            "",
+            "Specific URL(s) or location(s) of the infringing material:",
+            "- [URL OR LOCATION 1]",
+            "- [URL OR LOCATION 2]",
+            "",
+            "This information is reasonably sufficient to permit the service provider "
+            "to locate the material.",
+            "",
+            "**4. Contact Information**",
+            "",
+            f"Complaining Party: {rights_holder}",
+            "Address: [STREET ADDRESS, CITY, STATE/PROVINCE, ZIP/POSTAL CODE, COUNTRY]",
+            "Telephone: [PHONE NUMBER]",
+            "Email: [EMAIL ADDRESS]",
+            "",
+            "**5. Good Faith Statement**",
+            "",
+            "I have a good faith belief that use of the copyrighted material described above, "
+            "in the manner complained of, is not authorized by the copyright owner, its agent, "
+            "or the law.",
+            "",
+            "**6. Accuracy and Authorization Statement Under Penalty of Perjury**",
+            "",
+            "I swear, under penalty of perjury, that the information in this notification is "
+            "accurate and that I am the copyright owner or am authorized to act on behalf of "
+            f"the owner of an exclusive right that is allegedly infringed.",
+            "",
+            f"Legal basis asserted: {basis}.",
+            "",
+            "**7. Signature**",
+            "",
+            "Signature: /s/ [FULL LEGAL NAME]",
+            "Printed Name: [FULL LEGAL NAME]",
+            "Title: [TITLE/ROLE]",
+            "Date: [DATE]",
+            "",
+            "---",
+            "",
+            "Please remove or disable access to the identified material promptly "
+            "and preserve all associated access logs.",
         ]
     elif doc_type == "cease_desist":
         body = [
