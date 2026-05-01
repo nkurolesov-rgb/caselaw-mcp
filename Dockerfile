@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py .
 COPY tools/ tools/
 COPY entity/ entity/
-COPY events/ events/
+# COPY events/ events/
 # COPY data/ data/  # volume-mounted at runtime
 
 EXPOSE 8006
